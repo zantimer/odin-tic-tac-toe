@@ -7,6 +7,13 @@
  .O{
     grid-row: 4/5;
  }
+
+ .winnerDiv{
+   grid-row: 4/5;
+   min-width: 50px;
+   min-height: 50px;
+   border: 1px solid black;
+ }
  
  .field{
     min-width: 50px;
