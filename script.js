@@ -1,9 +1,4 @@
-//global queries
-const xButton = document.querySelector('.X');
-const oButton = document.querySelector('.O');
-const winnerField = document.querySelector('.winnerField');
-//game logic
-
+//gameboard
 const gameBoard = (()=>
 {
     const fields = {['f1']:'',
@@ -19,6 +14,87 @@ const gameBoard = (()=>
     return {fields};
 })();
 
+// display logic
+
+const displayController = (() =>
+{
+    const drawBoard = () =>
+        {
+        for (field in gameBoard.fields)
+        {
+            const div = document.createElement('div');
+            const p = document.createElement('p');
+            
+            div.id = 'field';
+            div.classList.add(field);
+            p.classList.add('field-value');
+            p.textContent = gameBoard[field];
+            
+            document.body.appendChild(div);
+            div.appendChild(p);
+            
+            
+            humanMarkerDown(p, div);
+        }
+        // const divs = document.querySelectorAll('#field');
+        // divs.forEach(div =>{
+        //     div.addEventListener('click',()=>{gameFlow.winCheck()});
+        // })
+        
+        
+    }
+    const humanMarkerDown = (p, div) => {
+        p.addEventListener('click', (e) => {
+            if (humanPlayer.isTurnOf && e.target.textContent == ''&&!gameFlow.winner) {
+                e.target.textContent = humanPlayer.marker;
+                gameBoard.fields[div.classList.item(0)] = humanPlayer.marker;
+                if (!gameFlow.winCheck())
+                {
+                humanPlayer.isTurnOf = false;
+                gameFlow.turns.first = aiPlayer;
+                gameFlow.startGame();
+                }
+                else
+                {
+                    humanPlayer.isTurnOf = false;
+                }
+            }
+        });
+        }
+        const xButton = document.querySelector('.X');
+        const oButton = document.querySelector('.O');
+        const winnerField = document.querySelector('.winnerField');
+        const buttons = () => {
+
+            xButton.addEventListener('click', () =>{
+                humanPlayer.marker = 'X';
+                aiPlayer.marker = 'O';
+                displayController.drawBoard();
+                xButton.disabled = true;
+                oButton.disabled = true;
+            })
+            oButton.addEventListener('click', () =>{
+                humanPlayer.marker = 'O';
+                aiPlayer.marker = 'X';
+                displayController.drawBoard();
+                xButton.disabled = true;
+                oButton.disabled = true;
+            }) 
+        xButton.addEventListener('click', gameFlow.startGame);
+        oButton.addEventListener('click', gameFlow.startGame);
+
+        const resetBtn = document.createElement('button');
+        document.body.appendChild(resetBtn);
+        resetBtn.classList.add('resetBtn');
+        resetBtn.textContent = "Reset game"
+        resetBtn.addEventListener('click', gameFlow.resetGame);
+        };
+             
+        return {drawBoard, buttons, winnerField, xButton, oButton}
+        
+    })();
+    
+    
 //player factory logic
 const playerFactory = (name, who, marker) => 
 {
@@ -34,12 +110,16 @@ const aiPlayer = playerFactory('John but AI',
 
 //game logic
 
-let winner = false;
 const gameFlow = (()=>{
+    let winner = false;
     const turns = {first: undefined,
                 second: undefined};
-        function startGame(){
+        const startGame = ()=>{
             
+            if (winner)
+            {
+                return;
+            }
         
         if(humanPlayer.marker == 'O' && !humanPlayer.hasMoved)
         {
@@ -94,72 +174,17 @@ const gameFlow = (()=>{
                     const div = document.body.querySelector(`.f${aiPick}`);
                     const divP = div.querySelector('.field-value');
                     divP.textContent = aiPlayer.marker;
+                    
+                    winCheck();
                     aiPlayer.isTurnOf = false;
                     turns.first = humanPlayer;
                     turns.first.isTurnOf = true;
                     turns.second = aiPlayer;
+                    
                 }
             }
         }
         
-
-        
-
-        xButton.addEventListener('click', () =>{
-            humanPlayer.marker = 'X';
-            aiPlayer.marker = 'O';
-            drawBoard();
-            xButton.disabled = true;
-            oButton.disabled = true;
-        })
-        oButton.addEventListener('click', () =>{
-            humanPlayer.marker = 'O';
-            aiPlayer.marker = 'X';
-            drawBoard();
-            xButton.disabled = true;
-            oButton.disabled = true;
-        })      
-        
-        function drawBoard()
-        {
-        for (field in gameBoard.fields)
-        {
-            const div = document.createElement('div');
-            const p = document.createElement('p');
-            
-            div.id = 'field';
-            div.classList.add(field);
-            p.classList.add('field-value');
-            p.textContent = gameBoard[field];
-            
-            document.body.appendChild(div);
-            div.appendChild(p);
-            
-            
-            humanMarkerDown(p, div);
-        }
-        const divs = document.querySelectorAll('#field');
-        divs.forEach(div =>{
-            div.addEventListener('click',()=>{winnerCheck.CheckWinner(gameBoard)});
-        })
-        
-        function humanMarkerDown(p, div) {
-            p.addEventListener('click', (e) => {
-                if (humanPlayer.isTurnOf && e.target.textContent == ''&&!winner) {
-                    e.target.textContent = humanPlayer.marker;
-                    gameBoard.fields[div.classList.item(0)] = humanPlayer.marker;
-                    
-                    if (!winnerCheck.CheckWinner(gameBoard))
-                    {humanPlayer.isTurnOf = false;
-                    turns.first = aiPlayer;
-                    startGame();}
-                }
-            });
-        }
-        }
-
-        xButton.addEventListener('click', startGame);
-        oButton.addEventListener('click', startGame);
 
         function resetGame()
         {
@@ -175,164 +200,81 @@ const gameFlow = (()=>{
                     div.remove()
                 })
             }
-            winnerField.textContent = '';
-            xButton.disabled = false;
-            oButton.disabled = false;
+            displayController.winnerField.textContent = '';
+            displayController.xButton.disabled = false;
+            displayController.oButton.disabled = false;
             winner = false;
             
         }
-        const resetBtn = document.createElement('button');
-        document.body.appendChild(resetBtn);
-        resetBtn.classList.add('resetBtn');
-        resetBtn.textContent = "Reset game"
-        resetBtn.addEventListener('click', resetGame);
 
-        const winnerCheck = {CheckWinner:
-        function CheckWinner(gameBoard) {
-            if (!winner)    
-            {
-                if ((gameBoard.fields['f1'] == humanPlayer.marker &&
-                gameBoard.fields['f2'] == humanPlayer.marker &&
-                gameBoard.fields['f3'] == humanPlayer.marker) ||
-                (gameBoard.fields['f1'] == aiPlayer.marker &&
-                gameBoard.fields['f2'] == aiPlayer.marker &&
-                gameBoard.fields['f3'] == aiPlayer.marker))
-                {
-                    winnerField.textContent = gameBoard.fields['f1'] ==
-                     humanPlayer.marker ?
-                     `${humanPlayer.name} won!`:`${aiPlayer.name} won!`;
-                     aiPlayer.isTurnOf = false;
-                     humanPlayer.isTurnOf = false;
-                     winner = true;
-                     console.log('conditional 1');
-                     return true;
-                }
-                
-                else if ((gameBoard.fields['f4'] == humanPlayer.marker &&
-                gameBoard.fields['f5'] == humanPlayer.marker &&
-                gameBoard.fields['f6'] == humanPlayer.marker )||
-                (gameBoard.fields['f4'] == aiPlayer.marker &&
-                gameBoard.fields['f5'] == aiPlayer.marker &&
-                gameBoard.fields['f6'] == aiPlayer.marker))
-                {
-                    winnerField.textContent = gameBoard.fields['f4'] ==
-                    humanPlayer.marker ?
-                    `${humanPlayer.name} won!`:`${aiPlayer.name} won!`;
-                    aiPlayer.isTurnOf = false;
-                    humanPlayer.isTurnOf = false;
-                    winner = true;
-                    console.log('conditional 2');
-                    return true;
-                }
-                
-                else if ((gameBoard.fields['f7'] == humanPlayer.marker&&
-                gameBoard.fields['f8'] == humanPlayer.marker &&
-                gameBoard.fields['f9'] == humanPlayer.marker) ||
-                (gameBoard.fields['f7'] == aiPlayer.marker &&
-                gameBoard.fields['f8'] == aiPlayer.marker &&
-                gameBoard.fields['f9'] == aiPlayer.marker))
-                {
-                    winnerField.textContent = gameBoard.fields['f7'] ==
-                     humanPlayer.marker ?
-                     `${humanPlayer.name} won!`:`${aiPlayer.name} won!`;
-                     aiPlayer.isTurnOf = false;
-                    humanPlayer.isTurnOf = false;
-                    winner = true;
-                    console.log('conditional 3');
-                    return true;
-                }
+    function winIterator(field, nr) {
 
-            else if ((gameBoard.fields['f1'] == humanPlayer.marker &&
-                gameBoard.fields['f4'] == humanPlayer.marker &&
-                gameBoard.fields['f7'] == humanPlayer.marker )||
-                (gameBoard.fields['f1'] == aiPlayer.marker &&
-                gameBoard.fields['f4'] == aiPlayer.marker &&
-                gameBoard.fields['f7'] == aiPlayer.marker))
-                {
-                    winnerField.textContent = gameBoard.fields['f1'] ==
-                     humanPlayer.marker ?
-                     `${humanPlayer.name} won!`:`${aiPlayer.name} won!`;
-                     aiPlayer.isTurnOf = false;
-                    humanPlayer.isTurnOf = false;
-                    winner = true;
-                    console.log('conditional 4');
-                    return true;
+        displayController.winnerField.textContent = gameBoard.fields[field] ==
+            humanPlayer.marker ?
+            `${humanPlayer.name} won!` : `${aiPlayer.name} won!`;
+                aiPlayer.isTurnOf = false;
+                humanPlayer.isTurnOf = false;
+                winner = true;
+                console.log(`win condition ${nr}`);
+            }
+
+    const winnerCheck = ((type)=>{
+            
+            const winConditional =(field1, field2, field3) => gameBoard.fields[field1] != '' &&
+            gameBoard.fields[field1] == gameBoard.fields[field2] &&
+                        gameBoard.fields[field2] == gameBoard.fields[field3];
+
+                switch (type){
+                    case 'row':
+                        {
+                        for(let i = 1; i<=7; i+=3)
+                        {
+                            if (winConditional(`f${i}`, `f${i+1}`, `f${i+2}`))
+                            {
+                                winIterator(`f${i}`, 'row')
+                                console.log(i)
+                                return true;
+                            }
+                        }
+                        }
+
+                    case 'line':
+                        for(let i = 1; i<=3; i++)
+                        {
+                            if (winConditional(`f${i}`, `f${i+3}`, `f${i+6}`))
+                            {
+                                winIterator(`f${i}`, 'line')
+                                return true;
+                            }
+                        }
+
+                    case 'diag':
+                        if(winConditional('f1', 'f5', 'f9'))
+                        {
+                            winIterator('f1', 'diag')
+                            return true
+                        }
+                        else if( winConditional(`f3`, `f5`, `f7`))
+                        {
+                            winIterator('f3', 'diag')
+                            return true;
+                        }
+                            
+                    default:
+                        return false;
+                        break;
                 }
-                
-                else if ((gameBoard.fields['f2'] == humanPlayer.marker &&
-                gameBoard.fields['f5'] == humanPlayer.marker &&
-                gameBoard.fields['f8'] == humanPlayer.marker) ||
-                (gameBoard.fields['f2'] == aiPlayer.marker &&
-                gameBoard.fields['f5'] == aiPlayer.marker &&
-                gameBoard.fields['f8'] == aiPlayer.marker))
+            
+        } );
+               const winCheck = () => {
+                if (winnerCheck('row')||winnerCheck('line')||winnerCheck('diag'))
                 {
-                    winnerField.textContent = gameBoard.fields['f2'] ==
-                     humanPlayer.marker ?
-                     `${humanPlayer.name} won!`:`${aiPlayer.name} won!`;
-                     aiPlayer.isTurnOf = false;
-                    humanPlayer.isTurnOf = false;
-                    winner = true;
-                    console.log('conditional 5');
-                    return true;
-                }
-                
-                else if ((gameBoard.fields['f3'] == humanPlayer.marker &&
-                gameBoard.fields['f6'] == humanPlayer.marker &&
-                gameBoard.fields['f9'] == humanPlayer.marker) ||
-                (gameBoard.fields['f3'] == aiPlayer.marker &&
-                gameBoard.fields['f6'] == aiPlayer.marker &&
-                gameBoard.fields['f9'] == aiPlayer.marker))
-                {
-                    winnerField.textContent = gameBoard.fields['f3'] ==
-                     humanPlayer.marker ?
-                     `${humanPlayer.name} won!`:`${aiPlayer.name} won!`;
-                     aiPlayer.isTurnOf = false;
-                    humanPlayer.isTurnOf = false;
-                    winner = true;
-                    console.log('conditional 6');
-                    return true;
-                }
-                
-                else if ((gameBoard.fields['f1'] == humanPlayer.marker &&
-                gameBoard.fields['f5'] == humanPlayer.marker &&
-                gameBoard.fields['f9'] == humanPlayer.marker) ||
-                (gameBoard.fields['f1'] == aiPlayer.marker &&
-                gameBoard.fields['f5'] == aiPlayer.marker &&
-                gameBoard.fields['f9'] == aiPlayer.marker))
-                {
-                    winnerField.textContent = gameBoard.fields['f1'] ==
-                     humanPlayer.marker ?
-                     `${humanPlayer.name} won!`:`${aiPlayer.name} won!`;
-                     aiPlayer.isTurnOf = false;
-                    humanPlayer.isTurnOf = false;
-                    winner = true;
-                    console.log('conditional 7');
-                    return true;
-                }
-                
-            else if ((gameBoard.fields['f3'] == humanPlayer.marker &&
-                gameBoard.fields['f5'] == humanPlayer.marker &&
-                gameBoard.fields['f7'] == humanPlayer.marker) ||
-                (gameBoard.fields['f3'] == aiPlayer.marker &&
-                gameBoard.fields['f5'] == aiPlayer.marker &&
-                gameBoard.fields['f7'] == aiPlayer.marker))
-                {
-                    winnerField.textContent = gameBoard.fields['f3'] ==
-                     humanPlayer.marker ?
-                     `${humanPlayer.name} won!`:`${aiPlayer.name} won!`;
-                     aiPlayer.isTurnOf = false;
-                    humanPlayer.isTurnOf = false;
-                    winner = true;
-                    console.log('conditional 8');
                     return true;
                 }
                 else
                 {
-                return false;
+                    return false;
                 }
-            }
-            }
-            
-        }
-    })();
-    
+            } 
+            return{startGame, resetGame, winCheck, turns, winner}
+})();
