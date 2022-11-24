@@ -112,6 +112,7 @@ const aiPlayer = playerFactory('John but AI',
 
 const gameFlow = (()=>{
     let winner = false;
+    let minimaxer = true;
     const turns = {first: undefined,
                 second: undefined};
         const startGame = ()=>{
@@ -147,7 +148,7 @@ const gameFlow = (()=>{
             gameBoard.fields.f7 != 'X'||'O' &&
             gameBoard.fields.f8 != 'X'||'O' &&
             gameBoard.fields.f9 != 'X'||'O') && aiPlayer.isTurnOf
-            && !winner)
+            && !winner &&!minimaxer)
         {
             console.log('my turn now')
             function randomField(min, max)
@@ -182,6 +183,20 @@ const gameFlow = (()=>{
                     turns.second = aiPlayer;
                     
                 }
+            }
+            else if (minimaxer && turns.first == aiPlayer)
+            {
+                let bestMove = findBestMove(gameBoard.fields);
+                gameBoard.fields[bestMove.field] = aiPlayer.marker;
+                const div = document.body.querySelector(`.${bestMove.field}`);
+                    const divP = div.querySelector('.field-value');
+                    winCheck();
+                    divP.textContent = aiPlayer.marker;
+                    aiPlayer.isTurnOf = false;
+                    turns.first = humanPlayer;
+                    turns.first.isTurnOf = true;
+                    turns.second = aiPlayer;
+
             }
         }
         
@@ -218,11 +233,11 @@ const gameFlow = (()=>{
                 console.log(`win condition ${nr}`);
             }
 
-    const winnerCheck = ((type)=>{
-            
             const winConditional =(field1, field2, field3) => gameBoard.fields[field1] != '' &&
             gameBoard.fields[field1] == gameBoard.fields[field2] &&
                         gameBoard.fields[field2] == gameBoard.fields[field3];
+    const winnerCheck = ((type)=>{
+            
 
                 switch (type){
                     case 'row':
@@ -275,6 +290,202 @@ const gameFlow = (()=>{
                 {
                     return false;
                 }
-            } 
-            return{startGame, resetGame, winCheck, turns, winner}
+            }
+            
+////////////minimax 
+            const move = (field) =>{
+                return {field}
+            }
+
+            function isMovesLeft(board)
+            {
+                for(let i = 1; i<10;i++)
+                {
+                    if (board[`f${i}`] == '')
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            function evaluate(board)
+            {
+                for(let row = 1; row<4;row+=3)
+                {
+                    
+                    if (winConditional(`f${row}`,
+                     `f${row+1}`, `f${row+2}`))
+                    {
+                        if (board[`f${row}`]== aiPlayer.marker)
+                        {
+                            return +10;
+                        }
+                        else if (board[`f${row}`] == humanPlayer.marker)
+                        {
+                            return -10;
+                        }
+                    }
+                }
+
+                for(let col = 1; col<4;col++)
+                {
+                    
+                    if (winConditional(`f${col}`,
+                     `f${col+3}`, `f${col+6}`))
+                    {
+                        if (board[`f${col}`]== aiPlayer.marker)
+                        {
+                            return +10;
+                        }
+                        else if (board[`f${col}`] == humanPlayer.marker)
+                        {
+                            return -10;
+                        }
+                    }
+                }
+                        if(winConditional('f1', 'f5', 'f9'))
+                        {
+                            if(board['f1'] == aiPlayer.marker)
+                            {
+                                return +10;
+                            }
+                            else if (board['f1'] == humanPlayer.marker)
+                            {
+                                return -10;
+                            }
+
+                        }
+                        else if( winConditional(`f3`, `f5`, `f7`))
+                        {
+                            if(board['f3'] == aiPlayer.marker)
+                            {
+                                return +10;
+                            }
+                            else if (board['f3'] == humanPlayer.marker)
+                            {
+                                return -10;
+                            }
+                        }
+                        return 0;
+            }
+
+            function minimax(board, depth, isMax)
+            {
+                let score = evaluate(board);
+
+                if (score == 10)
+                {
+                    return score;
+                }
+                if (score == -10)
+                {
+                    return score;
+                }
+                if (isMovesLeft(board) == false)
+                {
+                    return 0;
+                }
+                if (isMax)
+                {
+                    let best = -1000;
+                    for(let i = 0; i <10; i++)
+                    {
+                        if (board[`f${i}`]=='')
+                        {
+                            board[`f${i}`] = aiPlayer.marker
+
+                            best = Math.max(best, minimax(board, depth+1, !isMax))
+
+                            board[`f${i}`] = '';
+                        }
+                    }
+                    return best;
+
+                }
+                else
+                {
+                    let best = 1000;
+                    //traverse all cells
+                    for(let i = 0; i <10; i++)
+                    {
+                        if (board[`f${i}`]=='')
+                        {
+                            board[`f${i}`] = humanPlayer.marker
+
+                            best = Math.min(best, minimax(board, depth+1, !isMax))
+
+                            board[`f${i}`] = '';
+                        }
+                    }
+                    return best;
+                }
+            }
+            function findBestMove(board)
+            {
+                let bestVal = -1000;
+                let bestMove = move();
+                bestMove.field = -1;
+                for (let i = 1; i<10;i++)
+                {
+                    if (board[`f${i}`] == '')
+                    {
+                        board[`f${i}`] = aiPlayer.marker;
+                        let moveVal = minimax(board, 0, false)
+                        board[`f${i}`]='';
+                        if (moveVal>bestVal)
+                        {
+                            bestMove.field = `f${i}`;
+                            bestVal = moveVal;
+                        }
+                    }
+                }
+                return bestMove;
+            }
+            return{startGame, resetGame, winCheck, turns, winner, findBestMove}
 })();
+
+window.onload = displayController.buttons;
+
+
+
+//minimax pseudo code
+// define move const
+// function to check if any moves left
+//function evaluate(gameboard.fields) =
+// check rows/lines/diag for x/o and return 
+//scores for max and minimising (+10/-10, if none won 0)
+// minimax(gameBoard.fields, depth, isMax)
+//score = evaluate(board)
+// if score == 10 return score
+// if score == -10 return score
+// if no more moves return 0
+//if maximisers move
+//1. let best = -1000;
+// loop through cells =>
+// if gameboard.fields[field i] == ''
+//2. {board[i] = player make move
+//best = math.max(best, 
+//minimax(board, depth+1, !isMax))
+//board[i] = ''
+//}
+//return best
+//minimiser loop, same as above, but
+//1. best =1000;
+//2. make move opponent
+//function findbestmove(board)
+//{
+    //let bestVal = -1000;
+    // let bestMove = new Move();
+    // bestMove.row = -1;
+    // bestMove.col = -1;
+// loop through board=>
+// make move
+// get moveVal = minimax(board, 0, false)
+//undo move
+// if moveVal > best val
+//bestMove.row = i
+//bestMove.col = j
+//bestVal = moveVal;
+    //}
+    //return bestMove
