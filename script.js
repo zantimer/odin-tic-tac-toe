@@ -22,6 +22,7 @@ const displayController = (() =>
         {
         for (field in gameBoard.fields)
         {
+            const gridDiv = document.querySelector('.grid-div');
             const div = document.createElement('div');
             const p = document.createElement('p');
             
@@ -30,7 +31,7 @@ const displayController = (() =>
             p.classList.add('field-value');
             p.textContent = gameBoard[field];
             
-            document.body.appendChild(div);
+            gridDiv.appendChild(div);
             div.appendChild(p);
             
             
@@ -79,7 +80,8 @@ const displayController = (() =>
         oButton.addEventListener('click', gameFlow.startGame);
 
         const resetBtn = document.createElement('button');
-        document.body.appendChild(resetBtn);
+        const btnGrid = document.querySelector('.btn-grid')
+        btnGrid.appendChild(resetBtn);
         resetBtn.classList.add('resetBtn');
         resetBtn.textContent = "Reset game"
         resetBtn.addEventListener('click', gameFlow.resetGame);
@@ -225,14 +227,19 @@ const gameFlow = (()=>{
             gameBoard.fields[field1] == gameBoard.fields[field2] &&
                         gameBoard.fields[field2] == gameBoard.fields[field3];
     const winnerCheck = ((type)=>{
+        const highlightField = (field)=> document.querySelector(field);
                 switch (type){
                     case 'row':
+                    {
+                    for(let i = 1; i<=7; i+=3)
+                    {
+                        if (winConditional(`f${i}`, `f${i+1}`, `f${i+2}`))
                         {
-                        for(let i = 1; i<=7; i+=3)
-                        {
-                            if (winConditional(`f${i}`, `f${i+1}`, `f${i+2}`))
-                            {
-                                winIterator(`f${i}`, 'row')
+                                
+                        for (let j=0;j<3; j++) {
+	                    highlightField(`.f${i+j}`).classList.add('highlight');
+	                        }                                
+                            winIterator(`f${i}`, 'row')
                                 console.log(i)
                                 return true;
                             }
@@ -244,19 +251,29 @@ const gameFlow = (()=>{
                         {
                             if (winConditional(`f${i}`, `f${i+3}`, `f${i+6}`))
                             {
-                                winIterator(`f${i}`, 'line')
-                                return true;
+                                console.log(i)
+                            highlightField(`.f${i}`).classList.add('highlight');
+                            highlightField(`.f${i+3}`).classList.add('highlight');
+                            highlightField(`.f${i+6}`).classList.add('highlight');                                
+                            winIterator(`f${i}`, 'line')
+                             return true;
                             }
                         }
 
                     case 'diag':
                         if(winConditional('f1', 'f5', 'f9'))
                         {
+                            for (let j=1;j<10; j+=4) {
+                                highlightField(`.f${j}`).classList.add('highlight');
+                                    }                                
                             winIterator('f1', 'diag')
                             return true
                         }
                         else if( winConditional(`f3`, `f5`, `f7`))
                         {
+                            for (let j=3;j<8; j+=2) {
+                                highlightField(`.f${j}`).classList.add('highlight');
+                                    } 
                             winIterator('f3', 'diag')
                             return true;
                         }
