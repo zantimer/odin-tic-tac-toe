@@ -36,13 +36,8 @@ const displayController = (() =>
             
             humanMarkerDown(p, div);
         }
-        // const divs = document.querySelectorAll('#field');
-        // divs.forEach(div =>{
-        //     div.addEventListener('click',()=>{gameFlow.winCheck()});
-        // })
         
-        
-    }
+        }
     const humanMarkerDown = (p, div) => {
         p.addEventListener('click', (e) => {
             if (humanPlayer.isTurnOf && e.target.textContent == ''&&!gameFlow.winner) {
@@ -66,19 +61,19 @@ const displayController = (() =>
         const winnerField = document.querySelector('.winnerField');
         const buttons = () => {
 
-            xButton.addEventListener('click', () =>{
-                humanPlayer.marker = 'X';
-                aiPlayer.marker = 'O';
+            function SetMarks(mrk1, mrk2) {
+                humanPlayer.marker = mrk1;
+                aiPlayer.marker = mrk2;
                 displayController.drawBoard();
                 xButton.disabled = true;
                 oButton.disabled = true;
+            }
+            xButton.addEventListener('click', () =>{
+                SetMarks('X', 'O');
             })
             oButton.addEventListener('click', () =>{
-                humanPlayer.marker = 'O';
-                aiPlayer.marker = 'X';
-                displayController.drawBoard();
-                xButton.disabled = true;
-                oButton.disabled = true;
+                SetMarks('O','X');
+
             }) 
         xButton.addEventListener('click', gameFlow.startGame);
         oButton.addEventListener('click', gameFlow.startGame);
@@ -170,33 +165,27 @@ const gameFlow = (()=>{
             }
             if(gameBoard.fields[`f${aiPick}`] == '')
                 {
-                    console.log('starting loop');
-                    gameBoard.fields[`f${aiPick}`] = aiPlayer.marker;
-                    const div = document.body.querySelector(`.f${aiPick}`);
-                    const divP = div.querySelector('.field-value');
-                    divP.textContent = aiPlayer.marker;
-                    
-                    winCheck();
-                    aiPlayer.isTurnOf = false;
-                    turns.first = humanPlayer;
-                    turns.first.isTurnOf = true;
-                    turns.second = aiPlayer;
+                    AIMove(`f${aiPick}`);
                     
                 }
             }
-            else if (minimaxer && turns.first == aiPlayer)
+        else if (minimaxer && turns.first == aiPlayer &&isMovesLeft(gameBoard.fields))
             {
                 let bestMove = findBestMove(gameBoard.fields);
-                gameBoard.fields[bestMove.field] = aiPlayer.marker;
-                const div = document.body.querySelector(`.${bestMove.field}`);
-                    const divP = div.querySelector('.field-value');
-                    winCheck();
-                    divP.textContent = aiPlayer.marker;
-                    aiPlayer.isTurnOf = false;
-                    turns.first = humanPlayer;
-                    turns.first.isTurnOf = true;
-                    turns.second = aiPlayer;
+                console.log(bestMove.field)
+                AIMove(bestMove.field);
+            }
 
+            function AIMove(aiPick) {
+                gameBoard.fields[aiPick] = aiPlayer.marker;
+                const div = document.body.querySelector(`.${aiPick}`);
+                const divP = div.querySelector('.field-value');
+                divP.textContent = aiPlayer.marker;
+                winCheck();
+                aiPlayer.isTurnOf = false;
+                turns.first = humanPlayer;
+                turns.first.isTurnOf = true;
+                turns.second = aiPlayer;
             }
         }
         
@@ -223,7 +212,6 @@ const gameFlow = (()=>{
         }
 
     function winIterator(field, nr) {
-
         displayController.winnerField.textContent = gameBoard.fields[field] ==
             humanPlayer.marker ?
             `${humanPlayer.name} won!` : `${aiPlayer.name} won!`;
@@ -237,8 +225,6 @@ const gameFlow = (()=>{
             gameBoard.fields[field1] == gameBoard.fields[field2] &&
                         gameBoard.fields[field2] == gameBoard.fields[field3];
     const winnerCheck = ((type)=>{
-            
-
                 switch (type){
                     case 'row':
                         {
@@ -277,9 +263,7 @@ const gameFlow = (()=>{
                             
                     default:
                         return false;
-                        break;
                 }
-            
         } );
                const winCheck = () => {
                 if (winnerCheck('row')||winnerCheck('line')||winnerCheck('diag'))
@@ -311,7 +295,7 @@ const gameFlow = (()=>{
 
             function evaluate(board)
             {
-                for(let row = 1; row<4;row+=3)
+                for(let row = 1; row<10;row+=3)
                 {
                     
                     if (winConditional(`f${row}`,
@@ -389,7 +373,7 @@ const gameFlow = (()=>{
                 if (isMax)
                 {
                     let best = -1000;
-                    for(let i = 0; i <10; i++)
+                    for(let i = 1; i <10; i++)
                     {
                         if (board[`f${i}`]=='')
                         {
@@ -407,7 +391,7 @@ const gameFlow = (()=>{
                 {
                     let best = 1000;
                     //traverse all cells
-                    for(let i = 0; i <10; i++)
+                    for(let i = 1; i <10; i++)
                     {
                         if (board[`f${i}`]=='')
                         {
@@ -425,7 +409,7 @@ const gameFlow = (()=>{
             {
                 let bestVal = -1000;
                 let bestMove = move();
-                bestMove.field = -1;
+                bestMove.field = undefined;
                 for (let i = 1; i<10;i++)
                 {
                     if (board[`f${i}`] == '')
@@ -446,46 +430,3 @@ const gameFlow = (()=>{
 })();
 
 window.onload = displayController.buttons;
-
-
-
-//minimax pseudo code
-// define move const
-// function to check if any moves left
-//function evaluate(gameboard.fields) =
-// check rows/lines/diag for x/o and return 
-//scores for max and minimising (+10/-10, if none won 0)
-// minimax(gameBoard.fields, depth, isMax)
-//score = evaluate(board)
-// if score == 10 return score
-// if score == -10 return score
-// if no more moves return 0
-//if maximisers move
-//1. let best = -1000;
-// loop through cells =>
-// if gameboard.fields[field i] == ''
-//2. {board[i] = player make move
-//best = math.max(best, 
-//minimax(board, depth+1, !isMax))
-//board[i] = ''
-//}
-//return best
-//minimiser loop, same as above, but
-//1. best =1000;
-//2. make move opponent
-//function findbestmove(board)
-//{
-    //let bestVal = -1000;
-    // let bestMove = new Move();
-    // bestMove.row = -1;
-    // bestMove.col = -1;
-// loop through board=>
-// make move
-// get moveVal = minimax(board, 0, false)
-//undo move
-// if moveVal > best val
-//bestMove.row = i
-//bestMove.col = j
-//bestVal = moveVal;
-    //}
-    //return bestMove
